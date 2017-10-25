@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 一般的配置方式，注意这里的class和city属性一致的，可以提出来-->
+	<bean id = "address" class = "cn.seu.edu.autowire.Address"
+				p:city="NanJingJS" p:street="JiuLongHu"></bean>
+				
+	<bean id = "address2" class="cn.seu.edu.autowire.Address"
+				p:city="NanJingJS" p:street="LianShui"></bean>
+				
+	<!-- 配置继承，注意这里person3的配置方式 -->
+	<bean id = "address3" class = "cn.seu.edu.autowire.Address"
+				p:city="NanJingJS^" p:street="JiuLongHu"></bean>
+				
+	<bean id = "address4" parent="address3" p:street="Xuanwu"></bean>
+	
+	<!-- bean之间的依赖 -->
+	<!-- 这里假设创建person时，必须有car实例，即person依赖于car,如果不配置car，则报错 
+	<bean id = "person" class = "cn.seu.edu.autowire.Person" p:name="wyc" p:address-ref="address" depends-on="car"></bean>
+	-->
+	<bean id = "person" class = "cn.seu.edu.autowire.Person" p:name="wyc" p:address-ref="address"></bean>
+
+</beans>
