@@ -173,3 +173,15 @@ custom | cn.seu.edu.xxTypeFilter | 采用 xxTypeFilter 通过代码过滤，要�
 
 ## 泛型依赖注入
 &emsp;&emsp;泛型依赖注入式Spring4.X引入的新特性，他可以为bean注入泛型成员对应的引用
+
+## Spring AOP--以下内容均针对Spring实现的AOP而言
+&emsp;&emsp;使用动态代理，将对象包裹起来，然后调用代理对象取代原始方法，任何原始对象的调用都要通过代理，由代理对象决定是否以及何时将方法调用转到原始对象，几个基本概念
+1. 切面Aspect，跨越应用程序多个模块的功能，是一个被模块化特殊对待的对象，也称横切关注点；可以理解为 Aspect = advice + pointcut
+2. 通知advice，切面需要完成的工作，可以认为是切面总的每个方法；可以理解为what + when
+3. 目标target， 被通知的对象
+4. 代理proxy，向目标应用通知后生成的对象
+5. 连接点jointpoint，就是程序执行的某个位置，例如方法调用前、后、正常返回、抛异常、前后等；连接点由两个信息确定：方法表示的程序执行点（仅对Spring而言），即方法，和相对点的方位，即方法调用的前、后等
+6. 切点pointcut，每个类都拥有多个连接点，连接点相当于数据库的记录，切点相当于查询条件，aop通过切点定位到连接点，切点和连接点不是一一对应的，一般一个切点对应多个连接点，切点通过org.springframework.aop.PointCut接口进行描述，它使用类和方法作为连接点的查询条件；可以理解为where
+
+基于注解的方式，在使用上，首选需要将切面加入IOC容器，使用@Conponent；然后声明切面，使用@Aspect；声明通知类型@Befroe、@After、@AfterReturing、@AfterThrowing、@Arround；在xml中加入<aop:aspectj-autoproxy/>启用aop
+
