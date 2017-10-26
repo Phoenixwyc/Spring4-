@@ -85,5 +85,91 @@ SpEL的语法如下
 4. 调用静态属性和方法，通过T运算符调用类的静态属性或方法，即T(全限定名).静态方法or属性，例如 value = "#{T(java.lang.Math).PI}"
 
 ## Bean的生命周期
+Spring IOC容器对bean的生命周期管理过程
+1. 通过构造方法或者工厂方法创建bean的实例
+2. 为bean的属性设置值和对其他bean的引用
+3. 调用bean的初始化方法
+4. bean可以被调用
+5. 当容器关闭时，调用bean的销毁方法
+6. 在bean的声明里设置init-method和destroy-method属性，可以为bean指定初始化和销毁方法
 
+&emsp;&emsp; bean的后置处理器允许调用初始化方法前后对bean进行额外处理；后置处理器将对容器中的**所有类型的bean实例**进行逐一处理，不只是某个bean或者某个类型的bean，一个典型的应用就是检查bean属性的正确性或者根据特定标准更改bean的属性；由于后置处理器是处理所有的bean的，为此一般需要对bean进行过滤，达到处理某些bean的目的；应用上，bean需要实现BeanPostProcessor接口，在初始化前后，Spring将吧每个bean实例分别送给接口定义的方法
+    * public Object postProcessAfterInitialization(Object bean, String beanName);
+	* public Object postProcessBeforeInitialization(Object bean, String beanName);
+配置上，不需要配置id，只需要配置class属性即可，Spring容器会自动识别这是一个BeanPostProcessor；对于返回值，一般需要返回处理后的bean，可以是原来的bean，也可以是修改后的bean，甚至可以是新创建的bean，即bean的后置处理器甚至可以换掉原来的bean；这时，bean的生命周期过程如下
+1. 通过构造方法或者工厂方法创建bean实例
+2. 设置bean的属性和bean之间的引用
+3. 将bean实例传递给bean后置处理器的postProcessBeforeInitialization方法
+4. 调用bean的初始化方法
+5. 将bean实例传递给bean的后置处理器postProcessAfterInitialization方法
+6. bean可以被调用
+7. 当容器关闭时，调用bean的销毁方法
 
+## 通过工厂方法配置bean——静态工厂和实例工厂
+&emsp;&emsp;调用静态工厂方法创建bean是将对象的创建过程封装到静态方法中，用户在需要对象时，只需要简单的调用静态方法，不需要关注bean的创建细节；在声明通过静态方法创建bean时，**需要在bean的class属性中指明拥有该工厂方法的类，同时在factorymethod属性中指定工厂方法的名称，最后使用<constructor-arg>元素对工厂传递参数**
+```
+静态工厂方法
+	<!--   通过静态工厂方法配置bean实例，注意这里不是配置静态工厂方法实例 -->
+	<bean id = "car1" class = "cn.seu.edu.factory.StaticCarFactory" factory-method="getCar">
+		<constructor-arg value = "Audi"></constructor-arg>
+	</bean>
+
+实例工厂方法
+	<!-- 因为实例工厂方法需要创建后才能获取实例，这里需要先配置实例工厂的bean -->
+	<bean id = "carInstanceFactory" class = "cn.seu.edu.factory.InstanceCarFactory"></bean>
+	<!-- 通过实例工厂配置bean --> 
+	<bean id = "car2" factory-bean="carInstanceFactory" factory-method="getCar">
+		<constructor-arg value = "Ford"></constructor-arg>
+	</bean>
+```
+
+## 通过FactoryBean配置
+&emsp;&emsp;通过FactoryBean配置bean时，需要实现FactoryBean接口，重写接口方法，一般用于框架整合
+```
+	<!-- 通过FactoryBean配置bean时
+		 class 指向实现FactoryBean接口的全类名
+		 property配置FactoryBean的属性
+		 返回的实例是FactoryBean的getObject()返回的实例
+	 -->
+	<bean id = "car" class = "cn.seu.edu.factorybean.CarFactoryBean">
+		<property name="brand" value = "BMW"></property>
+	</bean>
+```
+
+## 基于注解的方式配置bean与装配bean的属性
+&emsp;&emsp;Spring可以在classpath中进行组件扫描，进而侦测和实例化具有特定注解的组件；对扫描到的组件，Spring默认的命名策略是使用非限定类名，且第一个字母小写，当然也可以通过设置组件的value属性指定组件的名称；注意使用注解方式配置bean时，需要引入spring-aop-4.1.5.RELEASE.jar；特定组件包括
+1. @Component，一个基本注解，标识了一个受Spring管理的组件
+2. @Respository，标识持久层组件
+3. @Serivce，标识服务层/业务层组件
+4. @Controller， 标识表现层组件
+5. 需要注意的是，Spring本质上无法判断组件的类型，因此上述4种组件类型是可以混用的，即可以将@Serivce注解应用于持久层，但为了清晰，任然建议按实际需要选用合适的注解
+&emsp;&emsp;默认Spring是不开启组件扫描的，因此在使用Java Config方式需要使用@ComponentScan注解，或者再XML中使用<context:component-scan/>；这两种方式都可以指定扫描范围，以xml配置为例：
+1. base-package属性，指定需要扫描的基类包，Spring将自动扫描该基类包及其子包中的所有类，多个基类包时需要使用逗号分隔
+2. resource-pattern属性，表名仅希望扫描特定的类，而不是所有的类
+3. <context:include-filter>子节点表示需要包含的目标类，**注意这里需要设置<context:component-scan/>节点的use-default-filters属性为false，否则不生效；同时还需要注意，include不仅包含字面指定的类，还包含字面指定的类的子类，例如如果指定目标类为标注了@Component的类，那么标注了@Respository、@Serivce、@Controller注解的类也会包含进去**
+4. <context:exclude-filter>子节点表示不需要包含的目标类，**exclude-filter和include-filter在使用上的对比**
+    * include-filter必须设置use-default-filters为false，exclude-filter必须设置为true；Spring默认设置为true；
+	* include-filter、use-default-filters都包含字面指定的目标类，也包含其子类
+5. 一个<context:component-scan>下可以包含多个<context:include-filter>、<context:exclude-filter>
+6. <context:include-filter>、<context:exclude-filter>节点中存放表达式，过滤表达式如下：
+
+类别|实例|说明
+---|---|---|
+annotation | cn.seu.edu.xxxAnnotation | 所有标注了 xxxAnnotation 的类，该类型通过判断目标类是否标注了某个注解进行过滤
+assinable | cn.seu.edu.xxxService | 所有继承或者扩展了 xxxService 的类或者接口，该类型通过判断目标类是否扩展或者继承了某个特定的类或者接口进行过滤
+aspectj | AspectJ表达式 | 该类型通过AspectJ语法进行过滤
+regex | regex表达式 | 该类型通过正则表达式过滤
+custom | cn.seu.edu.xxTypeFilter | 采用 xxTypeFilter 通过代码过滤，要求该类必须实现org.springframework.core.TypeFilter接口
+
+<context:component-scan/>元素会自动注册一个AutowiredAnnotationBeanPostProcessor实例，该实例可以用来自动装配的具有@Autowired、@Resource、@Inject注解的属性
+@Autowired注解自动装配具有**兼容类型**的单个bean属性
+1. 构造器、普通字段、一切具有参数的方法都可以使用@Autowired注解
+2. 默认情况下，所有使用了@Autowired注解的属性都需要被设置，当Spring找不到匹配的bean时会抛出异常，如果某属性允许不设置，只需要设置@Autowired的required属性为false即可
+3. 默认情况下，当IOC容器中含有多个类型兼容的bean时，自动类型装配将无法工作，此时还需要使用@Qualifier注解，并指定bean的id，当然也可以通过设置组件bean的id方式排除歧义；**Spring允许对方法的入参使用@Qualifier注解**
+4. @Autowired注解可以使用在**数组类型**上，此时Spring会将**所有匹配**的bean进行自动装配
+5. @Autowired注解可以使用在**集合类型**上，此时Spring会读取集合的类型信息，然后自动装配**所有**与之兼容的bean
+6. @Autowired注解如果应用在java.util.Map上，如果Map的**key为String类型**时，此时Spring将自动装配与Map的value类型兼容的bean，此时Map的key就是bean的名称
+&emsp;&emsp;至于@Resource和@Inject注解，和@Autowired注解功能类似；@Resource注解根据bean的id进行装配，要求提供bean的id，如果不设置，则默认采用标注处的变量名或者方法名作为bean的id；@Inject和@utowired属性一样都是根据类型匹配注入的，不同之处在于@Inject没有required属性；**建议使用@Autowired注解**
+
+## 泛型依赖注入
+&emsp;&emsp;泛型依赖注入式Spring4.X引入的新特性，他可以为bean注入泛型成员对应的引用

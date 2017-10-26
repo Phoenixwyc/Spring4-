@@ -13,6 +13,11 @@
 		<config>src/beans-scope.xml</config>
 		<config>src/beans-property.xml</config>
 		<config>src/beans-SpEL.xml</config>
+		<config>src/beans-lifecycle.xml</config>
+		<config>src/beans-factory.xml</config>
+		<config>src/beans-factorybean.xml</config>
+		<config>src/beans-annotation.xml</config>
+		<config>src/beans-generic-di.xml</config>
 	</configs>
 	<autoconfigs>
 	</autoconfigs>

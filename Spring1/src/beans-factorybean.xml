@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- 通过FactoryBean配置bean时
+		 class 指向实现FactoryBean接口的全类名
+		 property配置FactoryBean的属性
+		 返回的实例是FactoryBean的getObject()返回的实例
+	 -->
+	<bean id = "car" class = "cn.seu.edu.factorybean.CarFactoryBean">
+		<property name="brand" value = "BMW"></property>
+	</bean>
+
+</beans>
