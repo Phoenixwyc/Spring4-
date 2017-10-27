@@ -1,8 +1,5 @@
-package cn.seu.edu.aop.helloworld.aopimpl;
+package cn.seu.edu.aop.helloworld.aopxml;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class ArithmeticCalculatorImpl implements ArithmeticCalculator {
 
 	@Override

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+	
+	<bean id = "arithmeticCalculator" class = "cn.seu.edu.aop.helloworld.aopxml.ArithmeticCalculatorImpl"></bean>
+	
+	<!-- 配置切面的bean -->
+	<bean id = "loggingAspect" class = "cn.seu.edu.aop.helloworld.aopxml.LoggingAspect"></bean>
+	<!-- 配置AOP -->
+	<aop:config>
+		<!-- 配置切点表达式 -->
+		<aop:pointcut expression="execution(public int cn.seu.edu.aop.helloworld.aopxml.ArithmeticCalculator.*(int, int))" 
+			id="loggingAspectExpression"/>
+		<!-- 配置切面和通知 -->
+		<aop:aspect ref = "loggingAspect" order = "2">
+			<!-- 配置通知 -->
+			<aop:before method="beforeMethod" pointcut-ref="loggingAspectExpression"/>
+			<aop:after method="afterMethod" pointcut-ref="loggingAspectExpression"/>
+			<aop:after-returning method="afterReturningMethod" pointcut-ref="loggingAspectExpression" returning="result"/>
+			<aop:after-throwing method="afterThrowingMethod" pointcut-ref="loggingAspectExpression" throwing="ex"/>
+			<aop:around method="aroundgMethod" pointcut-ref="loggingAspectExpression"/>
+		</aop:aspect>
+	</aop:config>
+
+</beans>

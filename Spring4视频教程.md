@@ -183,5 +183,34 @@ custom | cn.seu.edu.xxTypeFilter | 采用 xxTypeFilter 通过代码过滤，要�
 5. 连接点jointpoint，就是程序执行的某个位置，例如方法调用前、后、正常返回、抛异常、前后等；连接点由两个信息确定：方法表示的程序执行点（仅对Spring而言），即方法，和相对点的方位，即方法调用的前、后等
 6. 切点pointcut，每个类都拥有多个连接点，连接点相当于数据库的记录，切点相当于查询条件，aop通过切点定位到连接点，切点和连接点不是一一对应的，一般一个切点对应多个连接点，切点通过org.springframework.aop.PointCut接口进行描述，它使用类和方法作为连接点的查询条件；可以理解为where
 
-基于注解的方式，在使用上，首选需要将切面加入IOC容器，使用@Conponent；然后声明切面，使用@Aspect；声明通知类型@Befroe、@After、@AfterReturing、@AfterThrowing、@Arround；在xml中加入<aop:aspectj-autoproxy/>启用aop
+## 基于注解的AOP
+基于注解的方式，在使用上，首选需要将切面加入IOC容器，使用@Conponent；然后声明切面，使用@Aspect；声明通知类型@Befroe、@After、@AfterReturing、@AfterThrowing、@Around；在xml中加入<aop:aspectj-autoproxy/>启用aop；
+1. 通过在通知方法中使用Joinpoint参数，可以访问连接点的细节；
+2. @After 后置通知不管方法是否正常结束均会执行，注意在后置通知中不能访问方法执行的结果；
+3. @AfterThrowing异常通知中，可以访问异常且可以指定异常类型，此时只有在出现该异常时才执行异常通知，可以理解为catch语句；具体使用上，在注解中增加throwing参数，通知中增加一个同名参数即可
+4. @Returing，在返回通知中，只需要将returning属性添加到@Returing注解中，同时在通知中增加一个同名参数，就可以在通知中访问方法返回的结果
+5. @Around，一种功能最强的通知类型，可以全面的控制连接点，甚至可以控制是否执行连接点；对于环绕通知，连接点的参数必须是ProceedingJoinPoint，这时JoinPoint的子接口，用于控制何时以及是否执行连接点；在环绕通知中，必须显式调用ProceedingJoinPoint的proceed()方法，用来执行被代理方法，否则被代理方法将不执行；环绕通知中可以需要在proceed()方法执行之后才能获得方法执行结果，否则NPE；话绕通知必须有返回值；可以这么理解，环绕通知就是代理的全过程；
+在AOP中，还**可以使用@Oroder(数字值)注解，用于指定切面的优先级，其中值越小，优先级越高**；对于相同的切点表达式，还可以写一个空的方法，用@PointCut注解，然后在上述五种通知的注解中通过对该方法的引用来充当切点表达式，如果通知和切点表达式不再一个包内，加上包名即可
+
+## 基于XML的AOP
+```
+	<!-- 配置切面的bean -->
+	<bean id = "loggingAspect" class = "cn.seu.edu.aop.helloworld.aopxml.LoggingAspect"></bean>
+	<!-- 配置AOP -->
+	<aop:config>
+		<!-- 配置切点表达式 -->
+		<aop:pointcut expression="execution(public int cn.seu.edu.aop.helloworld.aopxml.ArithmeticCalculator.*(int, int))" 
+			id="loggingAspectExpression"/>
+		<!-- 配置切面 -->
+		<aop:aspect ref = "loggingAspect" order = "2">
+			<!-- 配置通知 -->
+			<aop:before method="beforeMethod" pointcut-ref="loggingAspectExpression"/>
+			<aop:after method="afterMethod" pointcut-ref="loggingAspectExpression"/>
+			<aop:after-returning method="afterReturningMethod" pointcut-ref="loggingAspectExpression" returning="result"/>
+			<aop:after-throwing method="afterThrowingMethod" pointcut-ref="loggingAspectExpression" throwing="ex"/>
+			<aop:around method="aroundgMethod" pointcut-ref="loggingAspectExpression"/>
+		</aop:aspect>
+	</aop:config>
+```
+
 

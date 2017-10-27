@@ -3,10 +3,6 @@ package cn.seu.edu.scope;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-import cn.seu.edu.autowire.Address;
-import cn.seu.edu.autowire.Car;
-import cn.seu.edu.autowire.Person;
-
 public class Main {
 	
 	public static void main(String[] args) {

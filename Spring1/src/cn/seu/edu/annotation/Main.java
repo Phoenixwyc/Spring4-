@@ -4,8 +4,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import cn.seu.edu.annotation.controller.UserController;
-import cn.seu.edu.annotation.respository.UserRespository;
-import cn.seu.edu.annotation.serivce.UserService;
 
 public class Main {
 	
