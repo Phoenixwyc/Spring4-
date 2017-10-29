@@ -213,4 +213,100 @@ custom | cn.seu.edu.xxTypeFilter | 采用 xxTypeFilter 通过代码过滤，要�
 	</aop:config>
 ```
 
+## Spring中JdbcTemplate和HdbcDaoSupport
+&emsp;&emsp;JdbcTemplate设计目的是为不同的JDBC操作提供模板方法，每个模板方法都能控制整个过程，并允许覆盖过程中的特定任务
+JdbcTemplate类被设计成线程安全的，所以可以在IOC容器中声明他的单个实例，然后将这个实例注入到所有DAO实例中；JdbcTemplate也利用了java的自动装箱拆箱、泛型、变长参数等机制简化开发；Spring JDBC框架还提供了JdbcDaoSupport类简化DAO实现，该类声明了JdbcTemplate属性，它可以从IOC容器中注入，也可以自动从数据源中创建；
+经典的JDBC中SQL参数通过占位符“？”表示，并且受到位置的限制，定位参数的问题在于一旦参数的顺序改变，就必须改变参数绑定；Spring中的命名参数JDBC模板**NamedParameterJdbcTemplate**按名称进行参数指定，需要以冒号开头,参数的命名可以随意指定，框架在运行时用占位符取代命名参数；如果参数的命名和类的属性名一致，也可以使用NamedParameterJdbcTemplate.update(String sql, SqlParameterSource paramSource)进行跟新操作，此时就可以像ORM一样直接存储一个对象，SqlParameterSource接口常用的实现类为BeanPropertySqlParameterSource
 
+## Spring的事务管理
+&emsp;&emsp;事务用来确保数据的完整性和一致性；事务就是一系列的动作，它们被看作一个单独的工作单元，要么全部完成，要么全部不起作用；事务的四个关键属性：
+1. 原子性atomicity，事务是一个原子操作，原子性保证要门全部完成，要么完全不起作用
+2. 一致性consistency，一旦所有的事务完成，事务就会提交，数据和资源就初一一种满足业务规则的一致性状态
+3. 隔离性isolation，许多事务可能会同时处理相同的数据，每个事务都应该与其他事务隔离开，防止数据破坏
+4. 持久性durability，一旦事务完成，无论发生什么系统错误，结果都不应该受影响，通常情况下，事务的结果会被持久化到数据库中
+
+JDBC事务存在的问题
+1. 重复的代码
+2. JDBC的事务是基于数据库的，移植性差
+
+&emsp;&emsp;Spring在不同的事务管理API之上，定义了一个抽象层，包装了事务的实现细节；Spring的核心事务管理抽象是org.springframework.transaction.PlatformTransactionManager，其封装了一组独立与实现技术的方法，无论使用Spring的哪种事务管理策略，事务管理器都是必须的；Spring既支持编程式事务，也支持声明式事务
+1. 编程式事务，将事务的管理代码嵌入到业务方法中控制事务的提交和回滚，编程式事务中，必须在每个事务操作中包含额外的事务管理代码
+2. 声明式事务，将事务的管理代码从业务方法中分离出来，以声明的方式实现事务管理，事务作为一个横切关注点，可以通过AOP的方式模块化；Spring就是通过Spring AOP框架支持声明式事务管理的。
+
+&emsp;&emsp;Spring中几种事务管理器的实现类，Spring的事务管理器以普通的bean的形式声明在Spring的IOC容器中：
+1. org.springframework.jdbc.datasource.DataSourceTransactionManager，事务从JDBC中获取
+2. org.springframework.transaction.jta.JtaTransactionManager，在JEE应用服务器上用JTA进行事务管理
+3. org.springframework.orm.hibernate.HibernateTransactionManager，
+
+```
+	<!-- 启用事务，这里需要tx命名空间 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<!-- 配置事务管理器 -->
+	<bean id = "transactionManager" class = "org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	// 添加事务注解
+	@Transactional
+	@Override
+	public void purchase(String username, String isbn, int nums) {
+		// TODO Auto-generated method stub
+		// 第一步获取书的单价
+		int bookPrice = bookShopDao.findBookPriceByIsbn(isbn);
+		// 第二步 更新数的库存
+		bookShopDao.updateBookStock(isbn, nums);
+		// 第三步更新用户余额
+		int totalMoney = bookPrice * nums;
+		bookShopDao.updateUserAccount(username, totalMoney);
+	}
+```
+
+## Spring 事务传播行为
+&emsp;&emsp;当一个事务的方法被另一个事务调用的时候，必须指定事务该如何传播，例如方法继续在原来的事务中运行，还是开启新的事务，并在自己的事务中运行；事务的传播行为由事务传播性指定；Spring的7中类传播行为，**默认REQUIRED**：
+
+传播属性 | 描述
+------|-----|
+**REQUIRED | 如果有事务运行，当前方法就在这个事务中运行，否则开启新的事务，并在该事务中运行，最后结果不允许部分失败的存在**
+**REQUIRED_NEW | 当前方法必须开启新的事务，并在自己的事务中运行，否则如果有事务正在运行，则将他挂起，最后的结果就是内部事务的汇总，允许部分失败的存在**
+SUPPORTS | 如果有事务运行，当前方法就在事务中运行，否则他就可以不在事务中运行
+NOT_SUPPRTS | 当前方法不应该在事务中运行，如果有事务运行，就将其挂起
+MANDATORY | 当前的方法必须在事务中运行，如果没有正在运行的事务，就抛异常
+NEVER | 当前方法不能运行在事务中，如果有正在运行的事务，就抛异常
+NESTED | 如果有事务运行，当前方法就在该事务的嵌套事务内运行，否则就启动一个新的事务，并在自己的事务内运行
+
+## 事务的其他属性
+一般情况下，事务设置事务传播特性、隔离界别即可，其他参数不变；默认值：传播特性为required、隔离级别read_committed、所有运行时异常回滚、所有受检查异常不回滚、只读false、不会超时
+```
+	@Transactional(propagation = Propagation.REQUIRED,    propagation设置传播属性
+			isolation = Isolation.READ_COMMITTED, isolation设置隔离级别
+			noRollbackFor = {UserAccountException.class}, noRollbackFor设置哪些异常不会滚
+			rollbackFor = {BookSockException.class},rollbackFor设置哪些异常回滚
+			redaInoly = false, 设置事务是否只读，如果设置只读将便于数据库做优化
+			timeout =  1);    超时属性指事务在强制回滚之前可以保持多久，防止长期运行的事务占用资源，单位秒；即事务超过X秒没有结束，不管之后事务能否以正常结束，事务是否抛异常，强制回滚    
+```
+```
+基于XML的事务配置，就是将事务配置成一个切面
+<!-- 配置事务管理器 -->
+	<bean id = "transactionManager" class = "org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 配置事务管理属性 -->
+	<tx:advice id = "txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+		<!-- 根据方法名指定事务的属性 -->
+			<tx:method name="purchase" propagation="REQUIRED" isolation="DEFAULT"/>
+			<!-- 对于查找行为，设置为只读的 -->
+			<tx:method name="get*" read-only="true"/>
+			<tx:method name="find*" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+	
+	<!-- 配置事务切面 -->
+	<aop:config>
+		<aop:pointcut expression="execution(* cn.seu.edu.spring.transaction.xml.service.*.*(..))" id="txPointCut"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut"/>
+	</aop:config>
+
+```

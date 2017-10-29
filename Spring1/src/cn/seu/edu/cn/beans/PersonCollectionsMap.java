@@ -1,6 +1,5 @@
 package cn.seu.edu.cn.beans;
 
-import java.util.List;
 import java.util.Map;
 
 public class PersonCollectionsMap {
